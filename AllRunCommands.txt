@@ -1,0 +1,77 @@
+Flutter Run & Build Commands for Different Platforms
+flutter pub upgrade --major-versions
+
+________________________________________
+
+1. Run & Build for Android
+
+    Run on Android Device/Emulator:
+        flutter run --verbose / flutter run -d device-id --verbose
+
+    Build APK:
+        flutter build apk --verbose
+
+    Build Release APK:
+        flutter build apk --release
+        
+    Build App Bundle (Google Play Store Format):
+        flutter build appbundle
+________________________________________
+
+2. Run & Build for Web
+
+    Run on Microsoft Edge:
+        flutter run -d edge --verbose
+
+    Run on Google Chrome:
+        flutter run -d chrome --verbose
+
+    Run on Web Server:
+        flutter run -d web-server --verbose (This will generate a local URL like http://localhost:8000.)
+
+    Build for Web:
+        flutter build web (The output files will be located in the build/web directory.)
+________________________________________
+
+3. Run & Build for iOS (Mac Only)
+
+    Run on iOS Simulator:
+        flutter run -d ios --verbose
+
+    Build for iOS:
+        flutter build ios
+
+    Build iOS in Release Mode:
+        flutter build ios --release
+________________________________________
+
+4. Run & Build for Windows
+
+    Run on Windows:
+        flutter run -d windows --verbose
+
+    Build for Windows:
+        flutter build windows
+________________________________________
+
+5. Run & Build for macOS (Mac Only)
+
+    Run on macOS:
+        flutter run -d macos --verbose
+
+    Build for macOS:
+        flutter build macos
+________________________________________
+
+6. Run & Build for Linux
+
+    Run on Linux:
+        flutter run -d linux --verbose
+
+    Build for Linux:
+        flutter build linux
+________________________________________
+
+7. Check Available Devices
+
+    flutter devices (This command will list all available devices and emulators.)
