@@ -9,11 +9,12 @@ class ChatAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     return AppBar(
-      elevation: 4, // Adds a shadow effect
+      elevation: 4, 
+      iconTheme: const IconThemeData(color: Colors.white), 
       flexibleSpace: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            colors: [Color(0xFF4A6FA5), Color(0xFF7180AC)], // Modern gradient
+            colors: [Color(0xFF4A6FA5), Color(0xFF7180AC)], 
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
@@ -44,7 +45,7 @@ class ChatAppBar extends StatelessWidget implements PreferredSizeWidget {
               ),
             ),
           ],
-          icon: const Icon(Icons.more_vert, color: Colors.white),
+          icon: const Icon(Icons.more_vert),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),

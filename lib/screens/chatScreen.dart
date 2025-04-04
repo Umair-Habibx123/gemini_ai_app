@@ -28,26 +28,58 @@ class ChatScreenState extends State<ChatScreen> {
   bool _isLoading = false;
   final ImagePicker _picker = ImagePicker();
   int? _currentChatId;
+  late ChatSession _chatSession;
+  bool _isStreaming = false;
+  String _streamingResponse = '';
+  final List<Content> _chatHistory = [];
+  // static const model1 = "gemini-1.5-flash";
+  // static const model2 = "gemini-2.0-flash";
+  static const model3 = "gemini-2.5-pro-exp-03-25";
+  final model = GenerativeModel(model: model3, apiKey: apiKey!);
 
   @override
   void initState() {
     super.initState();
     _currentChatId = widget.chatId;
+    _initializeChatSession();
+
     if (_currentChatId != null) {
       _loadMessages(_currentChatId!);
     }
   }
 
+  Future<void> _initializeChatSession() async {
+    _chatSession = model.startChat(
+      history: _chatHistory,
+      generationConfig: GenerationConfig(
+        maxOutputTokens: 1000,
+        temperature: 1.9, // creativity limit 0.0-2.0
+      ),
+    );
+  }
+
   Future<void> _loadMessages(int chatId) async {
     final messages = await ChatDatabaseHelper.instance.getMessages(chatId);
+
     setState(() {
       _messages.clear();
-      _messages.addAll(
-        messages.map((msg) {
-          return {'text': msg['text'], 'type': msg['type']};
-        }),
-      );
+      _chatHistory.clear();
     });
+
+    for (final msg in messages) {
+      final content =
+          msg['type'] == 'text'
+              ? Content.text(msg['text'] as String)
+              : Content.model([TextPart(msg['text'] as String)]);
+
+      _chatHistory.add(content);
+
+      setState(() {
+        _messages.add({'text': msg['text'], 'type': msg['type']});
+      });
+    }
+
+    await _initializeChatSession();
   }
 
   Future<int> _createNewChat() async {
@@ -66,6 +98,7 @@ class ChatScreenState extends State<ChatScreen> {
 
     setState(() {
       _currentChatId = chatIdInserted;
+      _chatHistory.clear();
     });
 
     _loadMessages(chatIdInserted);
@@ -77,9 +110,9 @@ class ChatScreenState extends State<ChatScreen> {
     setState(() {
       _currentChatId = null;
       _messages.clear();
+      _chatHistory.clear();
+      _chatSession = model.startChat();
     });
-
-    await _loadMessages(_currentChatId ?? 0);
   }
 
   String _generateRandomString(int length) {
@@ -132,16 +165,12 @@ class ChatScreenState extends State<ChatScreen> {
 
     setState(() {
       _isLoading = true;
+      _isStreaming = true;
+      _streamingResponse = '';
     });
 
     try {
       int chatId = _currentChatId ?? await _createNewChat();
-
-      final response = await generateContent(message, _images);
-
-      if (response.isEmpty) {
-        throw Exception('Failed to generate AI response.');
-      }
 
       if (message.isNotEmpty) {
         await ChatDatabaseHelper.instance.insertMessage({
@@ -161,25 +190,58 @@ class ChatScreenState extends State<ChatScreen> {
         });
       }
 
-      await ChatDatabaseHelper.instance.insertMessage({
-        'chat_id': chatId,
-        'text': response,
-        'type': 'response',
-        'created_at': DateTime.now().toString(),
-      });
-
       setState(() {
         if (message.isNotEmpty) {
           _messages.add({'text': message, 'type': 'text'});
+          _chatHistory.add(Content.text(message));
         }
         for (var image in _images) {
           _messages.add({'text': image.path, 'type': 'image'});
         }
-        _messages.add({'text': response, 'type': 'response'});
-        _controller.clear();
-        _images.clear();
+        _messages.add({'text': '', 'type': 'response'});
       });
 
+      final contentParts = <Part>[];
+      contentParts.add(TextPart(message));
+
+      if (_images.isNotEmpty) {
+        final imageParts = await Future.wait(
+          _images.map(
+            (image) async =>
+                DataPart('image/jpeg', await File(image.path).readAsBytes()),
+          ),
+        );
+        contentParts.addAll(imageParts);
+      }
+
+      final stream = _chatSession.sendMessageStream(
+        Content.multi(contentParts),
+      );
+      int responseIndex = _messages.length - 1;
+
+      await for (var chunk in stream) {
+        if (chunk.text != null) {
+          setState(() {
+            _streamingResponse += chunk.text!;
+            _messages[responseIndex] = {
+              'text': _streamingResponse,
+              'type': 'response',
+            };
+          });
+        }
+      }
+
+      await ChatDatabaseHelper.instance.insertMessage({
+        'chat_id': chatId,
+        'text': _streamingResponse,
+        'type': 'response',
+        'created_at': DateTime.now().toString(),
+      });
+
+      _chatHistory.add(Content.model([TextPart(_streamingResponse)]));
+
+      _controller.clear();
+      _images.clear();
       _showSnackBar('Message sent successfully 😍', Colors.green);
     } catch (e) {
       _showSnackBar(
@@ -189,6 +251,8 @@ class ChatScreenState extends State<ChatScreen> {
     } finally {
       setState(() {
         _isLoading = false;
+        _isStreaming = false;
+        _streamingResponse = '';
       });
     }
   }
@@ -204,7 +268,10 @@ class ChatScreenState extends State<ChatScreen> {
   }
 
   Future<String> generateContent(String message, List<XFile> images) async {
-    final model = GenerativeModel(model: 'gemini-1.5-flash', apiKey: apiKey!);
+    final model = GenerativeModel(
+      model: 'gemini-2.5-pro-exp-03-25',
+      apiKey: apiKey!,
+    );
     final prompt = TextPart(message);
     final imageParts = await Future.wait(
       images.map(
@@ -412,10 +479,15 @@ class ChatScreenState extends State<ChatScreen> {
       ),
       body: Column(
         children: [
-          Expanded(child: MessageList(messages: _messages)),
+          Expanded(
+            child: MessageList(messages: _messages, isStreaming: _isStreaming),
+          ),
           if (_images.isNotEmpty)
             Padding(
-              padding: const EdgeInsets.all(8.0),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 2.0, // Left & Right padding
+                vertical: 1.0, // Top & Bottom padding
+              ),
               child: ImagePreviewList(
                 images: _images,
                 onRemoveImage:
@@ -423,7 +495,10 @@ class ChatScreenState extends State<ChatScreen> {
               ),
             ),
           Padding(
-            padding: const EdgeInsets.all(2.0),
+            padding: const EdgeInsets.symmetric(
+                horizontal: 2.0, // Left & Right padding
+                vertical: 1.0, // Top & Bottom padding
+              ),
             child: InputArea(
               controller: _controller,
               isLoading: _isLoading,

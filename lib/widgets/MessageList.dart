@@ -6,22 +6,34 @@ import 'package:share_plus/share_plus.dart';
 
 class MessageList extends StatelessWidget {
   final List<Map<String, String>> messages;
+  final bool isStreaming;
 
-  const MessageList({super.key, required this.messages});
+  const MessageList({
+    super.key,
+    required this.messages,
+    this.isStreaming = false,
+  });
 
   @override
   Widget build(BuildContext context) {
     return ListView.builder(
+      reverse: true,
       itemCount: messages.length,
       itemBuilder: (context, index) {
-        final message = messages[index];
+        final message = messages[messages.length - 1 - index];
+        final isLastMessage = index == 0;
+
         switch (message['type']) {
           case 'text':
             return _buildTextMessage(context, message['text']!);
           case 'image':
             return _buildImageMessage(context, message['text']!);
           case 'response':
-            return _buildResponseMessage(context, message['text']!);
+            return _buildResponseMessage(
+              context,
+              message['text']!,
+              isStreaming: isStreaming && isLastMessage,
+            );
           default:
             return Container();
         }
@@ -58,22 +70,22 @@ class MessageList extends StatelessWidget {
             ],
           ),
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Expanded(
+              Flexible(
                 child: Text(
                   text,
                   style: const TextStyle(color: Colors.white, fontSize: 16),
-                  overflow: TextOverflow.ellipsis,
                 ),
               ),
+              const SizedBox(width: 8),
               IconButton(
-                icon: const Icon(Icons.copy, color: Colors.white),
+                icon: const Icon(Icons.copy, color: Colors.white, size: 20),
                 onPressed: () {
                   Clipboard.setData(ClipboardData(text: text));
                   _showSnackBar(
                     context,
-                    'Text Copied successfully',
+                    'Text copied successfully',
                     Colors.green,
                   );
                 },
@@ -94,6 +106,7 @@ class MessageList extends StatelessWidget {
           onTap: () {
             showModalBottomSheet(
               context: context,
+              isScrollControlled: true,
               builder: (BuildContext context) {
                 return SizedBox(
                   height: MediaQuery.of(context).size.height * 0.8,
@@ -107,8 +120,9 @@ class MessageList extends StatelessWidget {
             );
           },
           child: Container(
-            width: 200,
-            height: 200,
+            constraints: BoxConstraints(
+              maxWidth: MediaQuery.of(context).size.width * 0.7,
+            ),
             decoration: BoxDecoration(
               color: Colors.grey.shade200,
               borderRadius: BorderRadius.circular(15),
@@ -131,12 +145,19 @@ class MessageList extends StatelessWidget {
     );
   }
 
-  Widget _buildResponseMessage(BuildContext context, String response) {
+  Widget _buildResponseMessage(
+    BuildContext context,
+    String response, {
+    bool isStreaming = false,
+  }) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       child: Align(
         alignment: Alignment.centerLeft,
         child: Container(
+          constraints: BoxConstraints(
+            maxWidth: MediaQuery.of(context).size.width * 0.9,
+          ),
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             color: const Color(0xFFF1F5FB),
@@ -164,23 +185,31 @@ class MessageList extends StatelessWidget {
                 response,
                 style: const TextStyle(color: Colors.black87, fontSize: 16),
               ),
-              const SizedBox(height: 10),
+              if (isStreaming) ...[
+                const SizedBox(height: 8),
+                const LinearProgressIndicator(
+                  minHeight: 2,
+                  backgroundColor: Colors.transparent,
+                  color: Colors.blue,
+                ),
+              ],
+              const SizedBox(height: 8),
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.copy, color: Colors.grey),
+                    icon: const Icon(Icons.copy, color: Colors.grey, size: 20),
                     onPressed: () {
                       Clipboard.setData(ClipboardData(text: response));
                       _showSnackBar(
                         context,
-                        'Text Copied successfully',
+                        'Text copied successfully',
                         Colors.green,
                       );
                     },
                   ),
                   IconButton(
-                    icon: const Icon(Icons.share, color: Colors.grey),
+                    icon: const Icon(Icons.share, color: Colors.grey, size: 20),
                     onPressed: () {
                       Share.share(response);
                     },

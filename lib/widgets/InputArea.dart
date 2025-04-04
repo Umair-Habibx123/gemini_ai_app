@@ -49,7 +49,14 @@ class _InputAreaState extends State<InputArea> {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(16),
+          bottomRight: Radius.circular(16),
+        ),
+         border: Border.all( // Add 2px border
+      color: Colors.grey[300]!, // Border color (light grey)
+      width: 2.0, // 2px thickness
+    ),
         boxShadow: [
           BoxShadow(
             color: Colors.black12.withOpacity(0.1),
