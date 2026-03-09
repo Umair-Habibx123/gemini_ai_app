@@ -70,3 +70,8 @@ firebase_app_id_file.json
 *.tmp
 *.local
 *.lock
+
+
+# APK files
+APK/
+*.apk
