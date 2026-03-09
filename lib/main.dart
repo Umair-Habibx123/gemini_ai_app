@@ -7,17 +7,26 @@ import 'screens/splash_screen.dart';
 import 'screens/no_internet_screen.dart';
 
 String? apiKey;
-String? geminiModel;
+String? geminiModel; // currently active model (for display)
+List<String> geminiModels = []; // full fallback chain
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: ".env");
 
   apiKey = dotenv.env['API_KEY'];
-  geminiModel = dotenv.env['GEMINI_MODEL'] ?? 'gemini-3.1-pro-preview';
+
+  final modelsRaw = dotenv.env['GEMINI_MODELS'] ?? 'gemini-2.0-flash';
+  geminiModels =
+      modelsRaw
+          .split(',')
+          .map((m) => m.trim())
+          .where((m) => m.isNotEmpty)
+          .toList();
+  geminiModel = geminiModels.first; // default display model
 
   assert(apiKey != null && apiKey!.isNotEmpty, 'API_KEY is missing from .env');
-
+  assert(geminiModels.isNotEmpty, 'GEMINI_MODELS is missing from .env');
   runApp(
     ChangeNotifierProvider(
       create: (context) => ConnectivityService(),
@@ -42,11 +51,12 @@ class MyApp extends StatelessWidget {
               secondary: Color(0xFF00D4AA),
             ),
           ),
-          home: connectivityService.hasInternet
-              ? const SplashScreen()
-              : NoInternetScreen(
-                  onRetry: connectivityService.retryConnection,
-                ),
+          home:
+              connectivityService.hasInternet
+                  ? const SplashScreen()
+                  : NoInternetScreen(
+                    onRetry: connectivityService.retryConnection,
+                  ),
           builder: (context, child) {
             return Stack(
               children: [

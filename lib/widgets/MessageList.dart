@@ -42,9 +42,12 @@ class MessageList extends StatelessWidget {
 
   // ─── Empty state ──────────────────────────────────────────────
 
-  Widget _buildEmptyState() {
-    return Center(
+Widget _buildEmptyState() {
+  return Center(
+    child: SingleChildScrollView(                          // ✅ prevents overflow
+      padding: const EdgeInsets.symmetric(vertical: 24),
       child: Column(
+        mainAxisSize: MainAxisSize.min,                    // ✅ shrink to content
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Container(
@@ -66,8 +69,9 @@ class MessageList extends StatelessWidget {
           _buildSuggestionChips(),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildSuggestionChips() {
     final suggestions = [

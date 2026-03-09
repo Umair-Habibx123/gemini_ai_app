@@ -4,8 +4,14 @@ import 'package:google_fonts/google_fonts.dart';
 class ChatAppBar extends StatelessWidget implements PreferredSizeWidget {
   final VoidCallback onExit;
   final String? chatName;
+  final String? modelName;
 
-  const ChatAppBar({super.key, required this.onExit, this.chatName});
+  const ChatAppBar({
+    super.key,
+    required this.onExit,
+    this.chatName,
+    this.modelName,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -51,7 +57,11 @@ class ChatAppBar extends StatelessWidget implements PreferredSizeWidget {
                 ),
               ],
             ),
-            child: const Icon(Icons.auto_awesome, color: Colors.white, size: 18),
+            child: const Icon(
+              Icons.auto_awesome,
+              color: Colors.white,
+              size: 18,
+            ),
           ),
           const SizedBox(width: 12),
           Column(
@@ -76,6 +86,7 @@ class ChatAppBar extends StatelessWidget implements PreferredSizeWidget {
                     fontWeight: FontWeight.w500,
                   ),
                 )
+              // ✅ REPLACE with:
               else
                 Row(
                   children: [
@@ -89,7 +100,9 @@ class ChatAppBar extends StatelessWidget implements PreferredSizeWidget {
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      'Ready',
+                      modelName != null && modelName!.isNotEmpty
+                          ? modelName!
+                          : 'Ready',
                       style: GoogleFonts.dmSans(
                         fontSize: 11,
                         color: const Color(0xFF00D4AA),
@@ -112,32 +125,36 @@ class ChatAppBar extends StatelessWidget implements PreferredSizeWidget {
             borderRadius: BorderRadius.circular(14),
             side: BorderSide(color: Colors.white.withOpacity(0.08)),
           ),
-          itemBuilder: (BuildContext context) => [
-            PopupMenuItem(
-              value: 'exit',
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(6),
-                    decoration: BoxDecoration(
-                      color: Colors.red.withOpacity(0.12),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: const Icon(Icons.exit_to_app,
-                        color: Colors.redAccent, size: 16),
+          itemBuilder:
+              (BuildContext context) => [
+                PopupMenuItem(
+                  value: 'exit',
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: Colors.red.withOpacity(0.12),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(
+                          Icons.exit_to_app,
+                          color: Colors.redAccent,
+                          size: 16,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Text(
+                        'Exit App',
+                        style: GoogleFonts.dmSans(
+                          fontSize: 14,
+                          color: Colors.white70,
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 10),
-                  Text(
-                    'Exit App',
-                    style: GoogleFonts.dmSans(
-                      fontSize: 14,
-                      color: Colors.white70,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
+                ),
+              ],
           icon: const Icon(Icons.more_vert, color: Color(0xFF8888AA)),
         ),
         const SizedBox(width: 4),
