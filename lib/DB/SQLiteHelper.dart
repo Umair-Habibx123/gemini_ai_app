@@ -26,14 +26,14 @@ class ChatDatabaseHelper {
 
   Future<void> _createDB(Database db, int version) async {
     await db.execute('''
-      CREATE TABLE chats (
+      CREATE TABLE if NOT EXISTS chats (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL,
         created_at TEXT NOT NULL
       )
     ''');
     await db.execute('''
-      CREATE TABLE messages (
+      CREATE TABLE if NOT EXISTS messages (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         chat_id INTEGER NOT NULL,
         text TEXT NOT NULL,
