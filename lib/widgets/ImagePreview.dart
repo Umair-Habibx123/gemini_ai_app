@@ -1,88 +1,63 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:share_plus/share_plus.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:image_picker/image_picker.dart';
+
+/// A single attached file (image, video, audio, or PDF)
+class AttachedFile {
+  final XFile file;
+  final String type; // 'image' | 'video' | 'audio' | 'pdf'
+
+  const AttachedFile({required this.file, required this.type});
+
+  String get path => file.path;
+  String get name => file.name;
+}
 
 class ImagePreviewList extends StatelessWidget {
-  final List<XFile> images;
-  final void Function(int) onRemoveImage;
+  final List<AttachedFile> files;
+  final void Function(int) onRemove;
 
   const ImagePreviewList({
     super.key,
-    required this.images,
-    required this.onRemoveImage,
+    required this.files,
+    required this.onRemove,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 10),
+      height: 90,
+      margin: const EdgeInsets.fromLTRB(12, 0, 12, 8),
       decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.8),
-        borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(16),
-          topRight: Radius.circular(16),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.3),
-            blurRadius: 8,
-            offset: const Offset(0, -4),
-          ),
-        ],
+        color: const Color(0xFF13131F),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white.withOpacity(0.06)),
       ),
-      height: 100,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
-        itemCount: images.length,
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        itemCount: files.length,
         itemBuilder: (context, index) {
+          final f = files[index];
           return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 6.0),
+            padding: const EdgeInsets.only(right: 8),
             child: Stack(
               clipBehavior: Clip.none,
               children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(14),
-                  child: Container(
-                    width: 85,
-                    height: 85,
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade900,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.4),
-                          blurRadius: 6,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: Image.file(
-                      File(images[index].path),
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                ),
+                _FileThumbnail(file: f),
                 Positioned(
-                  top: -5,
-                  right: -5,
+                  top: -6, right: -6,
                   child: GestureDetector(
-                    onTap: () => onRemoveImage(index),
+                    onTap: () => onRemove(index),
                     child: Container(
+                      width: 20, height: 20,
                       decoration: BoxDecoration(
-                        color: Colors.redAccent.withOpacity(0.8),
+                        color: const Color(0xFF0D0D14),
                         shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.5),
-                            blurRadius: 6,
-                          ),
-                        ],
+                        border: Border.all(color: Colors.white.withOpacity(0.15)),
                       ),
-                      padding: const EdgeInsets.all(6),
-                      child: const Icon(
-                        Icons.close,
-                        color: Colors.white,
-                        size: 18,
-                      ),
+                      child: const Icon(Icons.close, color: Colors.white70, size: 12),
                     ),
                   ),
                 ),
@@ -91,6 +66,64 @@ class ImagePreviewList extends StatelessWidget {
           );
         },
       ),
+    );
+  }
+}
+
+class _FileThumbnail extends StatelessWidget {
+  final AttachedFile file;
+  const _FileThumbnail({required this.file});
+
+  Color get _accentColor {
+    switch (file.type) {
+      case 'image': return const Color(0xFF6C63FF);
+      case 'video': return const Color(0xFF00D4AA);
+      case 'audio': return const Color(0xFFFF6B9D);
+      case 'pdf':   return const Color(0xFFFFB347);
+      default:      return Colors.white38;
+    }
+  }
+
+  IconData get _icon {
+    switch (file.type) {
+      case 'image': return Icons.image_outlined;
+      case 'video': return Icons.videocam_outlined;
+      case 'audio': return Icons.audiotrack_outlined;
+      case 'pdf':   return Icons.picture_as_pdf_outlined;
+      default:      return Icons.attach_file;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 70, height: 70,
+      decoration: BoxDecoration(
+        color: _accentColor.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: _accentColor.withOpacity(0.4)),
+      ),
+      child: file.type == 'image'
+          ? ClipRRect(
+              borderRadius: BorderRadius.circular(11),
+              child: Image.file(File(file.path), fit: BoxFit.cover),
+            )
+          : Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(_icon, color: _accentColor, size: 24),
+                const SizedBox(height: 4),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: Text(
+                    file.name.length > 10 ? '${file.name.substring(0, 9)}…' : file.name,
+                    style: GoogleFonts.dmSans(color: _accentColor, fontSize: 9, fontWeight: FontWeight.w500),
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                  ),
+                ),
+              ],
+            ),
     );
   }
 }
