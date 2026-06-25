@@ -1,8 +1,12 @@
-# Miscellaneous
+# ============================================================
+# MISCELLANEOUS
+# ============================================================
 *.class
 *.log
 *.pyc
 *.swp
+*.tmp
+*.local
 .DS_Store
 .atom/
 .buildlog/
@@ -11,19 +15,26 @@
 migrate_working_dir/
 api.http
 
-# IntelliJ related
+# ============================================================
+# INTELLIJ / ANDROID STUDIO
+# ============================================================
 *.iml
 *.ipr
 *.iws
 .idea/
+*.kotlin_module
 
-# VS Code settings
+# ============================================================
+# VS CODE
+# ============================================================
 .vscode/settings.json
 .vscode/tasks.json
 .vscode/launch.json
 .vscode/*.code-workspace
 
-# Flutter/Dart/Pub related
+# ============================================================
+# FLUTTER / DART / PUB
+# ============================================================
 .dart_tool/
 .flutter-plugins
 .flutter-plugins-dependencies
@@ -31,47 +42,95 @@ api.http
 .pub-cache/
 .pub/
 build/
+pubspec.lock
 
-# Generated files
+# ============================================================
+# GENERATED / DOC FILES
+# ============================================================
 **/doc/api/
+**/*.g.dart
+**/*.freezed.dart
+**/*.gr.dart
+**/*.mocks.dart
+
+# ============================================================
+# ANDROID SPECIFIC
+# ============================================================
+**/android/.gradle/
+**/android/.cxx/
+**/android/local.properties
+**/android/captures/
+**/android/gradlew
+**/android/gradlew.bat
+**/android/gradle/
+**/android/app/debug/
+**/android/app/profile/
+**/android/app/release/
+**/android/key.properties
+**/android/*.jks
+**/android/*.keystore
+
+# ============================================================
+# KOTLIN / JAVA GENERATED
+# ============================================================
+**/*.class
+**/R.java
+**/BuildConfig.java
+**/gen/
+**/generated/
+**/intermediates/
+
+# ============================================================
+# IOS (keep ignored even if not building for iOS)
+# ============================================================
 **/ios/Flutter/.last_build_id
 **/ios/Flutter/Flutter.framework/
 **/ios/Flutter/Flutter.podspec
 **/ios/.symlinks/
 **/ios/Pods/
 **/ios/Runner.xcworkspace/
-**/android/.cxx/
-**/android/app/debug
-**/android/app/profile
-**/android/app/release
+**/ios/Flutter/App.framework/
+**/ios/Flutter/engine/
+Podfile.lock
 
-# Obfuscation and symbolication related
+# ============================================================
+# MACOS / WINDOWS / LINUX
+# ============================================================
+**/macos/Flutter/ephemeral/
+**/windows/flutter/ephemeral/
+**/linux/flutter/ephemeral/
+
+# ============================================================
+# FIREBASE
+# ============================================================
+firebase_app_id_file.json
+google-services.json
+GoogleService-Info.plist
+
+# ============================================================
+# ENVIRONMENT & SECRETS
+# ============================================================
+.env
+.env.*
+*.pem
+*.p12
+secrets/
+config/secrets.dart
+
+# ============================================================
+# APK / BUILD OUTPUTS
+# ============================================================
+APK/
+*.apk
+*.aab
+*.ipa
 app.*.symbols
 app.*.map.json
 
-# macOS related
-**/macos/Flutter/ephemeral/
-
-# Windows related
-**/windows/flutter/ephemeral/
-
-# Linux related
-**/linux/flutter/ephemeral/
-
-# Firebase related
-firebase_app_id_file.json
-
-# Environment files
-.env
-.env.*
-
-# Local IDE configurations
-*.log
-*.tmp
-*.local
+# ============================================================
+# LOGS & CACHE
+# ============================================================
 *.lock
-
-
-# APK files
-APK/
-*.apk
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*

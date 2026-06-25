@@ -1,117 +1,204 @@
-# Gemini_AI_App
+# 🤖 Gemini AI App
 
-**Gemini_AI_App** is a Flutter-based mobile application that allows users to send text and image prompts to an AI, receiving creative and contextually relevant responses. The app leverages advanced AI models to generate text-based answers and image responses based on user input. Download APK [APK](https://github.com/Umair-Habibx123/gemini_ai_app/raw/refs/heads/master/APK/gemini_ai_app.apk)
----
+### Chat with AI using text and images — powered by Google Gemini
 
-## Features
+[![Flutter](https://img.shields.io/badge/Flutter-3.x-02569B?style=for-the-badge&logo=flutter&logoColor=white)](https://flutter.dev)
+[![Dart](https://img.shields.io/badge/Dart-3.x-0175C2?style=for-the-badge&logo=dart&logoColor=white)](https://dart.dev)
+[![Gemini](https://img.shields.io/badge/Gemini%20AI-Google-4285F4?style=for-the-badge&logo=google&logoColor=white)](https://ai.google.dev)
+[![Android](https://img.shields.io/badge/Android-API%2021+-3DDC84?style=for-the-badge&logo=android&logoColor=white)](https://android.com)
+[![License](https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge)](LICENSE)
 
-- **Text-to-AI Communication**: Send text prompts to the AI and receive contextually relevant text-based responses.
-- **Image Generation**: Upload or input image prompts and get text description based on your Image and description.
-- **Intuitive UI**: Clean, user-friendly interface for easy interaction with AI.
-- **AI Response Customization**: Tailor responses to your preferences with the app’s configuration options.
-- **Real-Time Interaction**: Receive quick responses to your prompts, with AI working seamlessly in the background.
+[⬇️ Download APK](https://github.com/Umair-Habibx123/gemini_ai_app/raw/refs/heads/master/APK/gemini_ai_app.apk) • [🐛 Report Bug](https://github.com/Umair-Habibx123/gemini_ai_app/issues) • [✨ Request Feature](https://github.com/Umair-Habibx123/gemini_ai_app/issues)
 
----
-
-## Prerequisites
-
-Before running the app, ensure that you have the following installed:
-
-- **Flutter**: [Install Flutter](https://flutter.dev/docs/get-started/install)
-- **Dart**: Comes pre-installed with Flutter SDK
-- **Android Studio / VS Code**: For a smooth development environment
-- **Firebase (Optional)**: If you plan to use cloud functions or other Firebase features
-- **Upgrade all dependency** : flutter pub upgrade --major-versions
+</div>
 
 ---
 
-## Installation
+## 📖 About
 
-1. **Clone the repository**
-
-   ```bash
-   git clone https://github.com/Umair-Habibx123/gemini_ai_app
-   cd Gemini_AI_App
-   ```
-
-2. **Install dependencies**
-
-   Run the following command to install the required packages:
-
-   ```bash
-   flutter pub get
-   ```
-
-3. **Run the app**
-
-   To run the app on an emulator or physical device:
-
-   ```bash
-   flutter run
-   ```
+**Gemini AI App** is a Flutter-based mobile application that lets users send text and image prompts to Google's Gemini AI, receiving creative and contextually relevant responses in real time. Built with a clean, intuitive UI for seamless AI interaction on Android.
 
 ---
 
-## App Structure
+## ✨ Features
 
-Here’s a brief overview of the app structure:
+- 💬 **Text Prompts** — Send any text prompt and get intelligent AI-generated responses
+- 🖼️ **Image Understanding** — Upload an image and get a text description or answer based on it
+- 🗃️ **Local Chat History** — Conversations saved locally using SQLite
+- ⚡ **Real-Time Responses** — Fast, seamless AI interaction in the background
+- 🎨 **Clean UI** — Intuitive and minimal interface for smooth user experience
 
-```
-lib/
-├── screens/                  # Contains the UI for different app screens
-│   ├── chatScreen.dart      # Home screen where users can interact with the app
-├── widgets/                  # Contains reuseable widgets
-│   ├── Appbar.dart
-|   ├── ImagePreview.dart
-│   ├── InputArea.dart
-|   ├── MessageList.dart
-├── DB/                            # Contain class for local chat storage
-├── ├── SQLiteHelper.dart.dart
-└── main.dart                         # Main entry point of the app
+---
+
+## 📲 Download
+
+| Platform | Download |
+|---|---|
+| Android (APK) | [⬇️ Download APK](https://github.com/Umair-Habibx123/gemini_ai_app/raw/refs/heads/master/APK/gemini_ai_app.apk) |
+
+> ℹ️ Enable **"Install from Unknown Sources"** in Android settings before installing.
+
+All releases → [GitHub Releases](https://github.com/Umair-Habibx123/gemini_ai_app/releases)
+
+---
+
+## 🛠️ Built With
+
+- [Flutter](https://flutter.dev/) — Cross-platform UI framework
+- [Dart](https://dart.dev/) — Programming language
+- [Gemini API](https://ai.google.dev/) — Google's AI model for text & image understanding
+- [SQLite](https://pub.dev/packages/sqflite) — Local chat history storage
+- [Image Picker](https://pub.dev/packages/image_picker) — Image input from camera/gallery
+- [HTTP](https://pub.dev/packages/http) — API requests
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+- [Flutter SDK](https://flutter.dev/docs/get-started/install) (3.x or higher)
+- [Android Studio](https://developer.android.com/studio) or [VS Code](https://code.visualstudio.com/)
+- Android device or emulator (API 21+)
+- [Gemini API Key](https://ai.google.dev/) (free)
+
+Check your Flutter setup:
+```bash
+flutter doctor
 ```
 
 ---
 
-## Technologies Used
+### Installation
 
-- **Flutter**: Cross-platform mobile app development
-- **Gemini API** (or other AI service): For generating text and image prompts.
-- **Provider / Riverpod**: State management (if used in the app).
-- **Image Picker**: For image input.
-- **HTTP / Dio**: For API calls and data fetching.
+**1. Clone the repository**
+```bash
+git clone https://github.com/Umair-Habibx123/gemini_ai_app
+cd gemini_ai_app
+```
+
+**2. Install dependencies**
+```bash
+flutter pub get
+```
+
+**3. Upgrade all packages (optional)**
+```bash
+flutter pub upgrade --major-versions
+```
+
+**4. Add your Gemini API Key**
+
+Create a `.env` file in the project root:
+```env
+GEMINI_API_KEY=your_api_key_here
+```
+
+Or add it directly in the config file if `.env` is not set up:
+```dart
+const String geminiApiKey = 'YOUR_API_KEY_HERE';
+```
+
+> Get your free API key at [Google AI Studio](https://aistudio.google.com/app/apikey)
+
+**5. Run the app**
+```bash
+# Check connected devices
+flutter devices
+
+# Run on your device
+flutter run -d <device_id>
+```
 
 ---
 
-## API Integration
+## 📁 Project Structure
 
-The app interacts with an external AI API (like OpenAI for GPT-3/4 or a similar service). You’ll need to obtain an API key from the AI service provider.
-
-1. **API Key Setup**
-
-   Obtain your API key from your service provider and add using .env it to your app’s environment configuration.
-
-2. **Sending Text Prompts**
-
-   The app sends text prompts to the AI and receives generated text. Use the following API endpoint:
-
-   ```
-
-   ```
-
-3. **Sending Image Prompts**
-
-   Upload image prompts to the API for text generation:
-
----
-
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+```
+gemini_ai_app/
+├── lib/
+│   ├── main.dart                   # App entry point
+│   ├── screens/
+│   │   └── chatScreen.dart         # Main chat screen
+│   ├── widgets/
+│   │   ├── Appbar.dart             # Custom app bar
+│   │   ├── ImagePreview.dart       # Image preview widget
+│   │   ├── InputArea.dart          # Text/image input area
+│   │   └── MessageList.dart        # Chat message list
+│   └── DB/
+│       └── SQLiteHelper.dart       # Local chat storage (SQLite)
+├── android/                        # Android-specific config
+├── assets/                         # Images, fonts, etc.
+└── pubspec.yaml                    # Dependencies & metadata
+```
 
 ---
 
-## Acknowledgments
+## 📦 Build APK
 
-- **Flutter**: For providing a cross-platform mobile development framework.
-- **AI Service Provider**: For the powerful AI tools that drive the app's functionality.
-- Special thanks to contributors and community support!
+```bash
+# Debug build (for testing)
+flutter build apk --debug
+
+# Release build (for distribution)
+flutter build apk --release
+```
+
+Output:
+```
+build/app/outputs/flutter-apk/app-release.apk
+```
+
+---
+
+## 🌐 API Reference
+
+This app uses the [Gemini API](https://ai.google.dev/) by Google.
+
+| Model | Use Case |
+|---|---|
+| `gemini-1.5-flash` | Fast text responses |
+| `gemini-1.5-pro` | Advanced reasoning & image understanding |
+
+**Free tier:** Available via [Google AI Studio](https://aistudio.google.com/) with generous limits for development.
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome!
+
+1. Fork the repository
+2. Create a feature branch
+```bash
+git checkout -b feature/AmazingFeature
+```
+3. Commit your changes
+```bash
+git commit -m "Add AmazingFeature"
+```
+4. Push to the branch
+```bash
+git push origin feature/AmazingFeature
+```
+5. Open a Pull Request
+
+---
+
+## 🐛 Issues
+
+Found a bug or have a suggestion? [Open an issue](https://github.com/Umair-Habibx123/gemini_ai_app/issues)
+
+---
+
+## 📄 License
+
+This project is open-source under the **MIT License**. See the [LICENSE](LICENSE) file for details.
+
+---
+
+## 🙏 Acknowledgments
+
+- [Google Gemini](https://ai.google.dev/) — For the powerful AI API
+- [Flutter](https://flutter.dev/) — For the amazing cross-platform framework
+- Community contributors and supporters

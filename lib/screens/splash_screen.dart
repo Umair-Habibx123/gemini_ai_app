@@ -3,6 +3,7 @@ import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:page_transition/page_transition.dart';
 import 'package:gemini_ai/screens/chatScreen.dart';
+import 'package:gemini_ai/theme/app_theme.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -82,8 +83,9 @@ class SplashScreenState extends State<SplashScreen>
 
   @override
   Widget build(BuildContext context) {
+    final c = context.colors;
     return Scaffold(
-      backgroundColor: const Color(0xFF0A0A12),
+      backgroundColor: c.background,
       body: Stack(
         children: [
           // Background ambient glow
@@ -183,7 +185,7 @@ class SplashScreenState extends State<SplashScreen>
                           style: GoogleFonts.dmSans(
                             fontSize: 36,
                             fontWeight: FontWeight.w800,
-                            color: Colors.white,
+                            color: c.textPrimary,
                             letterSpacing: -1,
                           ),
                         ),
@@ -192,7 +194,7 @@ class SplashScreenState extends State<SplashScreen>
                           'Your intelligent chat companion',
                           style: GoogleFonts.dmSans(
                             fontSize: 15,
-                            color: Colors.white.withOpacity(0.35),
+                            color: c.textFaint,
                             fontWeight: FontWeight.w400,
                           ),
                         ),
@@ -225,7 +227,7 @@ class SplashScreenState extends State<SplashScreen>
                 textAlign: TextAlign.center,
                 style: GoogleFonts.dmSans(
                   fontSize: 12,
-                  color: Colors.white.withOpacity(0.15),
+                  color: c.textFaint,
                 ),
               ),
             ),

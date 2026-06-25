@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
+import '../theme/app_theme.dart';
 
 /// A single attached file (image, video, audio, or PDF)
 class AttachedFile {
@@ -26,13 +27,14 @@ class ImagePreviewList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.colors;
     return Container(
       height: 90,
       margin: const EdgeInsets.fromLTRB(12, 0, 12, 8),
       decoration: BoxDecoration(
-        color: const Color(0xFF13131F),
+        color: c.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withOpacity(0.06)),
+        border: Border.all(color: c.border),
       ),
       child: ListView.builder(
         scrollDirection: Axis.horizontal,

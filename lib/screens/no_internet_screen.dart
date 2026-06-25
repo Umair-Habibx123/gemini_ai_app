@@ -1,15 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../theme/app_theme.dart';
 
 class NoInternetScreen extends StatelessWidget {
   final VoidCallback onRetry;
+  final bool isChecking;
 
-  const NoInternetScreen({super.key, required this.onRetry});
+  const NoInternetScreen({
+    super.key,
+    required this.onRetry,
+    this.isChecking = false,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final c = context.colors;
     return Scaffold(
-      backgroundColor: const Color(0xFF0A0A12),
+      backgroundColor: c.background,
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(32),
@@ -20,14 +27,14 @@ class NoInternetScreen extends StatelessWidget {
                 width: 80,
                 height: 80,
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.05),
+                  color: c.surface,
                   borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: Colors.white.withOpacity(0.07)),
+                  border: Border.all(color: c.border),
                 ),
                 child: Icon(
                   Icons.wifi_off_rounded,
                   size: 36,
-                  color: Colors.white.withOpacity(0.3),
+                  color: c.textFaint,
                 ),
               ),
               const SizedBox(height: 28),
@@ -36,47 +43,58 @@ class NoInternetScreen extends StatelessWidget {
                 style: GoogleFonts.dmSans(
                   fontSize: 24,
                   fontWeight: FontWeight.w700,
-                  color: Colors.white,
+                  color: c.textPrimary,
                   letterSpacing: -0.5,
                 ),
               ),
               const SizedBox(height: 10),
               Text(
-                'Check your network and try again',
-                style: GoogleFonts.dmSans(
-                  fontSize: 14,
-                  color: Colors.white.withOpacity(0.35),
-                ),
+                "You're offline. Check your Wi-Fi or mobile data\nand we'll reconnect automatically.",
+                style: GoogleFonts.dmSans(fontSize: 14, color: c.textFaint),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 40),
               GestureDetector(
-                onTap: onRetry,
+                onTap: isChecking ? null : onRetry,
                 child: Container(
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 32, vertical: 14),
+                    horizontal: 32,
+                    vertical: 14,
+                  ),
                   decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF6C63FF), Color(0xFF00D4AA)],
-                      begin: Alignment.centerLeft,
-                      end: Alignment.centerRight,
-                    ),
+                    gradient: c.brandGradient,
                     borderRadius: BorderRadius.circular(14),
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFF6C63FF).withOpacity(0.3),
+                        color: c.primary.withOpacity(0.3),
                         blurRadius: 16,
                         offset: const Offset(0, 6),
                       ),
                     ],
                   ),
-                  child: Text(
-                    'Try Again',
-                    style: GoogleFonts.dmSans(
-                      color: Colors.white,
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                    ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (isChecking) ...[
+                        const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                      ],
+                      Text(
+                        isChecking ? 'Checking…' : 'Try Again',
+                        style: GoogleFonts.dmSans(
+                          color: Colors.white,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),

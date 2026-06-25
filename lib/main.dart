@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get/get_navigation/src/root/get_material_app.dart';
 import 'package:provider/provider.dart';
+import 'providers/theme_provider.dart';
 import 'services/connectivity_service.dart';
 import 'screens/splash_screen.dart';
 import 'screens/no_internet_screen.dart';
+import 'theme/app_theme.dart';
 
 String? apiKey;
 String? geminiModel; // currently active model (for display)
@@ -27,9 +29,13 @@ Future<void> main() async {
 
   assert(apiKey != null && apiKey!.isNotEmpty, 'API_KEY is missing from .env');
   assert(geminiModels.isNotEmpty, 'GEMINI_MODELS is missing from .env');
+
   runApp(
-    ChangeNotifierProvider(
-      create: (context) => ConnectivityService(),
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => ConnectivityService()),
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
+      ],
       child: const MyApp(),
     ),
   );
@@ -40,34 +46,25 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<ConnectivityService>(
-      builder: (context, connectivityService, child) {
-        return GetMaterialApp(
-          debugShowCheckedModeBanner: false,
-          theme: ThemeData(
-            scaffoldBackgroundColor: const Color(0xFF0A0A12),
-            colorScheme: const ColorScheme.dark(
-              primary: Color(0xFF6C63FF),
-              secondary: Color(0xFF00D4AA),
-            ),
-          ),
-          home:
-              connectivityService.hasInternet
-                  ? const SplashScreen()
-                  : NoInternetScreen(
-                    onRetry: connectivityService.retryConnection,
-                  ),
-          builder: (context, child) {
-            return Stack(
-              children: [
-                child!,
-                if (!connectivityService.hasInternet)
-                  NoInternetScreen(
-                    onRetry: connectivityService.retryConnection,
-                  ),
-              ],
-            );
-          },
+    final themeProvider = context.watch<ThemeProvider>();
+    final connectivity = context.watch<ConnectivityService>();
+
+    return GetMaterialApp(
+      debugShowCheckedModeBanner: false,
+      theme: AppTheme.light,
+      darkTheme: AppTheme.dark,
+      themeMode: themeProvider.mode,
+      home: const SplashScreen(),
+      builder: (context, child) {
+        return Stack(
+          children: [
+            child!,
+            if (!connectivity.hasInternet)
+              NoInternetScreen(
+                onRetry: connectivity.retryConnection,
+                isChecking: connectivity.isChecking,
+              ),
+          ],
         );
       },
     );

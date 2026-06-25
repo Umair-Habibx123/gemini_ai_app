@@ -8,6 +8,7 @@ import 'package:gemini_ai/widgets/AppBar.dart';
 import 'package:gemini_ai/widgets/ImagePreview.dart';
 import 'package:gemini_ai/widgets/InputArea.dart';
 import 'package:gemini_ai/widgets/MessageList.dart';
+import 'package:gemini_ai/theme/app_theme.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:image_picker/image_picker.dart';
@@ -26,6 +27,7 @@ class ChatScreen extends StatefulWidget {
 
 class ChatScreenState extends State<ChatScreen> {
   final TextEditingController _controller = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
   final List<AttachedFile> _attachedFiles = [];
   final List<Map<String, String>> _messages = [];
   bool _isLoading = false;
@@ -40,7 +42,9 @@ class ChatScreenState extends State<ChatScreen> {
   late GenerativeModel _model;
 
   // Add this to your state variables
-  int _currentModelIndex = 0; // tracks which fallback we're on
+  int _currentModelIndex = 0; // tracks which fallback we're on at runtime
+  int _selectedModelIndex = 0; // the model the user explicitly chose
+  final Set<int> _triedModels = {}; // models already attempted this turn
 
   String get _activeModel => geminiModels[_currentModelIndex];
 
@@ -49,6 +53,7 @@ class ChatScreenState extends State<ChatScreen> {
   void initState() {
     super.initState();
     _currentModelIndex = 0;
+    _selectedModelIndex = 0;
     _buildModel(_activeModel);
     _currentChatId = widget.chatId;
     if (_currentChatId != null) {
@@ -66,9 +71,164 @@ class ChatScreenState extends State<ChatScreen> {
         maxOutputTokens: 8192,
         temperature: 1.0,
       ),
+      // System instruction (current Gemini API feature) — steers every reply
+      // toward clean, well-structured Markdown so the in-app renderer shows a
+      // polished, chat-bot style answer instead of a wall of text.
+      systemInstruction: Content.system(
+        'You are Gemini AI, a friendly and helpful assistant. '
+        'Always format answers in clear GitHub-flavored Markdown: use short '
+        'paragraphs, **bold** for key terms, bullet or numbered lists for steps, '
+        '`inline code` for identifiers, fenced code blocks (with the language) '
+        'for code, and tables when comparing things. Keep replies concise and '
+        'easy to read for non-technical users.',
+      ),
     );
     debugPrint('🤖 Active model: $modelName'); // ✅ console log
     if (mounted) setState(() => geminiModel = modelName);
+  }
+
+  // ─── Model switching (keeps full chat + context) ───────────────
+
+  /// Switch to another available model WITHOUT losing the conversation.
+  /// The chat session is rebuilt from [_chatHistory], so the new model picks
+  /// up with the entire prior context intact.
+  void _switchModel(int index) {
+    if (index == _selectedModelIndex || _isLoading) return;
+    _selectedModelIndex = index;
+    _currentModelIndex = index;
+    _buildModel(geminiModels[index]);
+    _startFreshSession(); // re-seed the new model with existing history
+    if (mounted) {
+      _showSnackBar(
+        'Switched to ${geminiModels[index]} · chat history kept',
+        const Color(0xFF00B392),
+      );
+    }
+  }
+
+  void _showModelPicker() {
+    final c = context.colors;
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (sheetContext) {
+        return Container(
+          margin: EdgeInsets.only(
+            left: 12,
+            right: 12,
+            top: 12,
+            bottom: 12 + MediaQuery.of(sheetContext).viewInsets.bottom,
+          ),
+          decoration: BoxDecoration(
+            color: c.surface,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: c.border),
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  margin: const EdgeInsets.only(top: 12, bottom: 8),
+                  width: 36,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: c.textFaint,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 4, 20, 4),
+                  child: Row(
+                    children: [
+                      Icon(Icons.swap_horiz_rounded, size: 18, color: c.primary),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Choose AI Model',
+                        style: GoogleFonts.dmSans(
+                          color: c.textSecondary,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'Your conversation stays — only the model changes.',
+                      style: GoogleFonts.dmSans(
+                        color: c.textFaint,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ),
+                ),
+                ...List.generate(geminiModels.length, (i) {
+                  final isActive = i == _selectedModelIndex;
+                  return ListTile(
+                    onTap: () {
+                      Navigator.pop(sheetContext);
+                      _switchModel(i);
+                    },
+                    contentPadding:
+                        const EdgeInsets.symmetric(horizontal: 20, vertical: 2),
+                    leading: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        gradient: isActive ? c.brandGradient : null,
+                        color: isActive ? null : c.primary.withOpacity(0.08),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(
+                        Icons.auto_awesome,
+                        size: 18,
+                        color: isActive ? Colors.white : c.primary,
+                      ),
+                    ),
+                    title: Text(
+                      geminiModels[i],
+                      style: GoogleFonts.dmSans(
+                        color: c.textPrimary,
+                        fontSize: 14,
+                        fontWeight:
+                            isActive ? FontWeight.w700 : FontWeight.w500,
+                      ),
+                    ),
+                    subtitle: Text(
+                      i == 0 ? 'Default · first choice' : 'Fallback option',
+                      style: GoogleFonts.dmSans(
+                        color: c.textFaint,
+                        fontSize: 11,
+                      ),
+                    ),
+                    trailing:
+                        isActive
+                            ? Icon(
+                              Icons.check_circle_rounded,
+                              color: c.secondary,
+                              size: 20,
+                            )
+                            : Icon(
+                              Icons.circle_outlined,
+                              color: c.textFaint,
+                              size: 20,
+                            ),
+                  );
+                }),
+                const SizedBox(height: 12),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
   // ─── Session ───────────────────────────────────────────────────
@@ -147,6 +307,26 @@ class ChatScreenState extends State<ChatScreen> {
     }
   }
 
+  /// Copies a picked/recorded file into permanent app storage so it stays
+  /// playable/openable later — even after the OS clears the temp cache or the
+  /// chat is reopened in a future session. Returns the new persistent path
+  /// (falls back to the original path if copying fails).
+  Future<String> _persistFile(String srcPath, String type) async {
+    try {
+      final dir = await getApplicationDocumentsDirectory();
+      final mediaDir = Directory('${dir.path}/media');
+      if (!await mediaDir.exists()) await mediaDir.create(recursive: true);
+      final ext = srcPath.contains('.') ? srcPath.split('.').last : type;
+      final dest =
+          '${mediaDir.path}/${type}_${DateTime.now().millisecondsSinceEpoch}.$ext';
+      await File(srcPath).copy(dest);
+      return dest;
+    } catch (e) {
+      debugPrint('_persistFile error: $e');
+      return srcPath;
+    }
+  }
+
   /// Called from InputArea via onPickFile(type)
   Future<void> _pickFile(String type) async {
     try {
@@ -156,16 +336,23 @@ class ChatScreenState extends State<ChatScreen> {
           imageQuality: 90,
         );
         if (picked != null && mounted) {
+          final stored = await _persistFile(picked.path, 'image');
           setState(
-            () => _attachedFiles.add(AttachedFile(file: picked, type: 'image')),
+            () => _attachedFiles.add(
+              AttachedFile(file: XFile(stored), type: 'image'),
+            ),
           );
         }
         return;
       }
 
-      // Request permission before opening file picker
-      final granted = await _requestStoragePermission(type);
-      if (!granted) return;
+      // Only media types need a runtime permission. PDF and generic files go
+      // through Android's Storage Access Framework picker, which grants access
+      // to the chosen file without any permission prompt.
+      if (type == 'video' || type == 'audio') {
+        final granted = await _requestStoragePermission(type);
+        if (!granted) return;
+      }
 
       FileType fileType;
       List<String>? extensions;
@@ -179,6 +366,9 @@ class ChatScreenState extends State<ChatScreen> {
         case 'pdf':
           fileType = FileType.custom;
           extensions = ['pdf'];
+          break;
+        case 'file':
+          fileType = FileType.any; // any file type — documents, code, archives
           break;
         default:
           return;
@@ -216,10 +406,11 @@ class ChatScreenState extends State<ChatScreen> {
         return;
       }
 
+      final stored = await _persistFile(filePath, type);
       if (mounted)
         setState(
           () => _attachedFiles.add(
-            AttachedFile(file: XFile(filePath), type: type),
+            AttachedFile(file: XFile(stored), type: type),
           ),
         );
     } catch (e, stack) {
@@ -232,12 +423,28 @@ class ChatScreenState extends State<ChatScreen> {
   }
 
   /// Called when InputArea finishes a voice recording
-  void _onAudioRecorded(String path) {
+  Future<void> _onAudioRecorded(String path) async {
+    final stored = await _persistFile(path, 'audio');
     if (mounted)
       setState(
-        () =>
-            _attachedFiles.add(AttachedFile(file: XFile(path), type: 'audio')),
+        () => _attachedFiles.add(
+          AttachedFile(file: XFile(stored), type: 'audio'),
+        ),
       );
+  }
+
+  /// Scrolls the (reversed) message list to the newest message. Offset 0 is the
+  /// bottom because the ListView is reversed. Waits a frame so it runs after the
+  /// keyboard has resized the viewport.
+  void _scrollToBottom() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!_scrollController.hasClients) return;
+      _scrollController.animateTo(
+        0,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
+    });
   }
 
   /// Called when suggestion chip tapped — fill controller
@@ -283,6 +490,29 @@ class ChatScreenState extends State<ChatScreen> {
         _ => 'audio/mp3',
       },
       'pdf' => 'application/pdf',
+      // Generic files — map common document/code/text extensions so Gemini can
+      // actually read them; fall back to plain text, then octet-stream.
+      'file' => switch (ext) {
+        'pdf' => 'application/pdf',
+        'txt' || 'log' || 'ini' || 'env' => 'text/plain',
+        'md' => 'text/md',
+        'csv' => 'text/csv',
+        'json' => 'application/json',
+        'xml' => 'text/xml',
+        'html' || 'htm' => 'text/html',
+        'css' => 'text/css',
+        'js' => 'application/x-javascript',
+        'py' => 'text/x-python',
+        'rtf' => 'text/rtf',
+        'png' => 'image/png',
+        'jpg' || 'jpeg' => 'image/jpeg',
+        'webp' => 'image/webp',
+        'gif' => 'image/gif',
+        'mp3' => 'audio/mp3',
+        'wav' => 'audio/wav',
+        'mp4' => 'video/mp4',
+        _ => 'text/plain',
+      },
       _ => 'application/octet-stream',
     };
   }
@@ -296,8 +526,10 @@ class ChatScreenState extends State<ChatScreen> {
       return;
     }
 
-    // ✅ Always reset to top model at the start of each new message
-    _currentModelIndex = 0;
+    // ✅ Start each new message from the user's chosen model; fallback then
+    // tries any other model if that one is overloaded/unavailable.
+    _currentModelIndex = _selectedModelIndex;
+    _triedModels.clear();
     _buildModel(_activeModel);
      _isFirstAttempt = true;    
 
@@ -352,7 +584,6 @@ class ChatScreenState extends State<ChatScreen> {
       setState(() {
         if (msgCopy.isNotEmpty) {
           _messages.add({'text': msgCopy, 'type': 'text'});
-          _chatHistory.add(Content.text(msgCopy));
         }
         for (final f in filesCopy)
           _messages.add({'text': f.path, 'type': f.type});
@@ -361,6 +592,7 @@ class ChatScreenState extends State<ChatScreen> {
 
       _controller.clear();
       _attachedFiles.clear();
+      _scrollToBottom();
     }
 
     final responseIndex = _messages.lastIndexWhere(
@@ -368,6 +600,7 @@ class ChatScreenState extends State<ChatScreen> {
     );
 
     // Rebuild session with current model
+    _triedModels.add(_currentModelIndex);
     _startFreshSession();
     debugPrint('📡 Sending with model: ${geminiModels[_currentModelIndex]}');
 
@@ -401,13 +634,21 @@ class ChatScreenState extends State<ChatScreen> {
       'type': 'response',
       'created_at': DateTime.now().toIso8601String(),
     });
+
+    // ✅ Commit this turn to context only AFTER a successful response, so a
+    // mid-stream fallback to another model never duplicates the user message.
+    if (msgCopy.isNotEmpty) _chatHistory.add(Content.text(msgCopy));
     _chatHistory.add(Content.model([TextPart(_streamingResponse)]));
 
   } on GenerativeAIException catch (e) {
-    if (_shouldFallback(e) && _currentModelIndex < geminiModels.length - 1) {
-      _currentModelIndex++;
-      final nextModel = geminiModels[_currentModelIndex];
-      debugPrint('⚠️ Model ${geminiModels[_currentModelIndex - 1]} failed → trying $nextModel (${_currentModelIndex}/${geminiModels.length - 1})');
+    // Find the next model we haven't tried yet (in priority order), regardless
+    // of where the user's selected model sits in the list.
+    final nextIndex = _nextUntriedModel();
+    if (_shouldFallback(e) && nextIndex != null) {
+      final failed = geminiModels[_currentModelIndex];
+      _currentModelIndex = nextIndex;
+      final nextModel = geminiModels[nextIndex];
+      debugPrint('⚠️ Model $failed failed → trying $nextModel (${_triedModels.length}/${geminiModels.length})');
       _buildModel(nextModel);
       await _sendWithFallback(msgCopy, filesCopy, parts);
     } else {
@@ -425,6 +666,15 @@ class ChatScreenState extends State<ChatScreen> {
       });
   }
 }
+
+  /// Returns the next model index (in priority order) that hasn't been tried
+  /// yet this turn, or null if every model has been attempted.
+  int? _nextUntriedModel() {
+    for (var i = 0; i < geminiModels.length; i++) {
+      if (!_triedModels.contains(i)) return i;
+    }
+    return null;
+  }
 
   /// Returns true if the error is worth retrying on a different model
   bool _shouldFallback(GenerativeAIException e) {
@@ -511,25 +761,26 @@ class ChatScreenState extends State<ChatScreen> {
   // ─── Helpers ───────────────────────────────────────────────────
 
   void _showAlert(String message) {
+    final c = context.colors;
     showDialog<void>(
       context: context,
       builder:
           (_) => AlertDialog(
-            backgroundColor: const Color(0xFF1A1A28),
+            backgroundColor: c.surface,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
             ),
             title: Text(
               'Notice',
               style: GoogleFonts.dmSans(
-                color: Colors.white,
+                color: c.textPrimary,
                 fontWeight: FontWeight.w600,
               ),
             ),
             content: Text(
               message,
               style: GoogleFonts.dmSans(
-                color: Colors.white.withOpacity(0.6),
+                color: c.textSecondary,
                 fontSize: 13,
               ),
             ),
@@ -538,7 +789,7 @@ class ChatScreenState extends State<ChatScreen> {
                 onPressed: () => Navigator.of(context).pop(),
                 child: Text(
                   'OK',
-                  style: GoogleFonts.dmSans(color: const Color(0xFF6C63FF)),
+                  style: GoogleFonts.dmSans(color: c.primary),
                 ),
               ),
             ],
@@ -567,13 +818,15 @@ class ChatScreenState extends State<ChatScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.colors;
     return Scaffold(
-      backgroundColor: const Color(0xFF0A0A12),
+      backgroundColor: c.background,
       resizeToAvoidBottomInset: true,
       appBar: ChatAppBar(
         onExit: () => exit(1),
         chatName: widget.chatName,
         modelName: geminiModel, // ✅ pass it down
+        onSwitchModel: geminiModels.length > 1 ? _showModelPicker : null,
       ),
       drawer: _buildDrawer(),
       body: SafeArea(
@@ -586,6 +839,7 @@ class ChatScreenState extends State<ChatScreen> {
                   messages: _messages,
                   isStreaming: _isStreaming,
                   onSuggestionTap: _onSuggestionTap,
+                  controller: _scrollController,
                 ),
               ),
             ),
@@ -600,6 +854,7 @@ class ChatScreenState extends State<ChatScreen> {
               onPickFile: _pickFile,
               onSendMessage: _sendMessage,
               onAudioRecorded: _onAudioRecorded,
+              onInputFocused: _scrollToBottom,
             ),
           ],
         ),
@@ -610,18 +865,17 @@ class ChatScreenState extends State<ChatScreen> {
   // ─── Drawer ────────────────────────────────────────────────────
 
   Widget _buildDrawer() {
+    final c = context.colors;
     return Drawer(
-      backgroundColor: const Color(0xFF0D0D18),
+      backgroundColor: c.surfaceAlt,
       child: Column(
         children: [
           Container(
             width: double.infinity,
             padding: const EdgeInsets.fromLTRB(20, 56, 20, 24),
             decoration: BoxDecoration(
-              color: const Color(0xFF0D0D18),
-              border: Border(
-                bottom: BorderSide(color: Colors.white.withOpacity(0.06)),
-              ),
+              color: c.surfaceAlt,
+              border: Border(bottom: BorderSide(color: c.border)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -630,15 +884,11 @@ class ChatScreenState extends State<ChatScreen> {
                   width: 44,
                   height: 44,
                   decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF6C63FF), Color(0xFF00D4AA)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
+                    gradient: c.brandGradient,
                     borderRadius: BorderRadius.circular(14),
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFF6C63FF).withOpacity(0.3),
+                        color: c.primary.withOpacity(0.3),
                         blurRadius: 16,
                       ),
                     ],
@@ -653,7 +903,7 @@ class ChatScreenState extends State<ChatScreen> {
                 Text(
                   'Gemini AI',
                   style: GoogleFonts.dmSans(
-                    color: Colors.white,
+                    color: c.textPrimary,
                     fontSize: 20,
                     fontWeight: FontWeight.w700,
                   ),
@@ -662,7 +912,7 @@ class ChatScreenState extends State<ChatScreen> {
                 Text(
                   geminiModel ?? 'unknown',
                   style: GoogleFonts.dmSans(
-                    color: const Color(0xFF6C63FF),
+                    color: c.primary,
                     fontSize: 11,
                     fontWeight: FontWeight.w500,
                   ),
@@ -681,15 +931,11 @@ class ChatScreenState extends State<ChatScreen> {
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(vertical: 13),
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF6C63FF), Color(0xFF00D4AA)],
-                    begin: Alignment.centerLeft,
-                    end: Alignment.centerRight,
-                  ),
+                  gradient: c.brandGradient,
                   borderRadius: BorderRadius.circular(14),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFF6C63FF).withOpacity(0.25),
+                      color: c.primary.withOpacity(0.25),
                       blurRadius: 12,
                       offset: const Offset(0, 4),
                     ),
@@ -722,9 +968,9 @@ class ChatScreenState extends State<ChatScreen> {
               future: ChatDatabaseHelper.instance.getChats(),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(
+                  return Center(
                     child: CircularProgressIndicator(
-                      color: Color(0xFF6C63FF),
+                      color: c.primary,
                       strokeWidth: 2,
                     ),
                   );
@@ -734,7 +980,7 @@ class ChatScreenState extends State<ChatScreen> {
                     child: Text(
                       'No chats yet',
                       style: GoogleFonts.dmSans(
-                        color: Colors.white.withOpacity(0.25),
+                        color: c.textFaint,
                         fontSize: 14,
                       ),
                     ),
@@ -751,13 +997,13 @@ class ChatScreenState extends State<ChatScreen> {
                       decoration: BoxDecoration(
                         color:
                             isActive
-                                ? const Color(0xFF6C63FF).withOpacity(0.12)
+                                ? c.primary.withOpacity(0.12)
                                 : Colors.transparent,
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
                           color:
                               isActive
-                                  ? const Color(0xFF6C63FF).withOpacity(0.3)
+                                  ? c.primary.withOpacity(0.3)
                                   : Colors.transparent,
                         ),
                       ),
@@ -773,17 +1019,14 @@ class ChatScreenState extends State<ChatScreen> {
                           decoration: BoxDecoration(
                             color:
                                 isActive
-                                    ? const Color(0xFF6C63FF).withOpacity(0.2)
-                                    : Colors.white.withOpacity(0.05),
+                                    ? c.primary.withOpacity(0.2)
+                                    : c.primary.withOpacity(0.06),
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Icon(
                             Icons.chat_bubble_outline_rounded,
                             size: 15,
-                            color:
-                                isActive
-                                    ? const Color(0xFF6C63FF)
-                                    : Colors.white.withOpacity(0.35),
+                            color: isActive ? c.primary : c.textFaint,
                           ),
                         ),
                         title: Text(
@@ -792,9 +1035,7 @@ class ChatScreenState extends State<ChatScreen> {
                             fontSize: 13,
                             fontWeight: FontWeight.w500,
                             color:
-                                isActive
-                                    ? Colors.white
-                                    : Colors.white.withOpacity(0.6),
+                                isActive ? c.textPrimary : c.textSecondary,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -803,7 +1044,7 @@ class ChatScreenState extends State<ChatScreen> {
                           chat['created_at'] ?? '',
                           style: GoogleFonts.dmSans(
                             fontSize: 11,
-                            color: Colors.white.withOpacity(0.2),
+                            color: c.textFaint,
                           ),
                         ),
                         trailing: GestureDetector(
@@ -811,7 +1052,7 @@ class ChatScreenState extends State<ChatScreen> {
                           child: Icon(
                             Icons.delete_outline_rounded,
                             size: 16,
-                            color: Colors.white.withOpacity(0.2),
+                            color: c.textFaint,
                           ),
                         ),
                         onTap:
@@ -838,25 +1079,26 @@ class ChatScreenState extends State<ChatScreen> {
   }
 
   void _confirmDeleteChat(Map<String, dynamic> chat) {
+    final c = context.colors;
     showDialog(
       context: context,
       builder:
           (_) => AlertDialog(
-            backgroundColor: const Color(0xFF1A1A28),
+            backgroundColor: c.surface,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
             ),
             title: Text(
               'Delete Chat',
               style: GoogleFonts.dmSans(
-                color: Colors.white,
+                color: c.textPrimary,
                 fontWeight: FontWeight.w600,
               ),
             ),
             content: Text(
               'This will permanently delete this chat and all its messages.',
               style: GoogleFonts.dmSans(
-                color: Colors.white.withOpacity(0.6),
+                color: c.textSecondary,
                 fontSize: 13,
               ),
             ),
@@ -865,9 +1107,7 @@ class ChatScreenState extends State<ChatScreen> {
                 onPressed: () => Navigator.pop(context),
                 child: Text(
                   'Cancel',
-                  style: GoogleFonts.dmSans(
-                    color: Colors.white.withOpacity(0.4),
-                  ),
+                  style: GoogleFonts.dmSans(color: c.textFaint),
                 ),
               ),
               TextButton(

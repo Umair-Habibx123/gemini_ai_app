@@ -1,35 +1,43 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
+import '../providers/theme_provider.dart';
+import '../theme/app_theme.dart';
 
 class ChatAppBar extends StatelessWidget implements PreferredSizeWidget {
   final VoidCallback onExit;
   final String? chatName;
   final String? modelName;
+  final VoidCallback? onSwitchModel;
 
   const ChatAppBar({
     super.key,
     required this.onExit,
     this.chatName,
     this.modelName,
+    this.onSwitchModel,
   });
 
   @override
   Widget build(BuildContext context) {
+    final c = context.colors;
+    final themeProvider = context.watch<ThemeProvider>();
+
     return AppBar(
       elevation: 0,
-      backgroundColor: const Color(0xFF0D0D14),
-      iconTheme: const IconThemeData(color: Color(0xFFB8B8CC)),
+      backgroundColor: c.surfaceAlt,
+      iconTheme: IconThemeData(color: c.textSecondary),
       titleSpacing: 0,
       bottom: PreferredSize(
         preferredSize: const Size.fromHeight(1),
         child: Container(
           height: 1,
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
                 Colors.transparent,
-                Color(0xFF6C63FF),
-                Color(0xFF00D4AA),
+                c.primary,
+                c.secondary,
                 Colors.transparent,
               ],
             ),
@@ -38,92 +46,108 @@ class ChatAppBar extends StatelessWidget implements PreferredSizeWidget {
       ),
       title: Row(
         children: [
-          // Animated logo mark
           Container(
             width: 34,
             height: 34,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(10),
-              gradient: const LinearGradient(
-                colors: [Color(0xFF6C63FF), Color(0xFF00D4AA)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
+              gradient: c.brandGradient,
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFF6C63FF).withOpacity(0.4),
+                  color: c.primary.withOpacity(0.4),
                   blurRadius: 12,
-                  spreadRadius: 0,
                 ),
               ],
             ),
-            child: const Icon(
-              Icons.auto_awesome,
-              color: Colors.white,
-              size: 18,
-            ),
+            child: const Icon(Icons.auto_awesome, color: Colors.white, size: 18),
           ),
           const SizedBox(width: 12),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'Gemini AI',
-                style: GoogleFonts.dmSans(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white,
-                  letterSpacing: 0.2,
-                ),
-              ),
-              if (chatName != null && chatName!.isNotEmpty)
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
                 Text(
-                  chatName!,
+                  'Gemini AI',
                   style: GoogleFonts.dmSans(
-                    fontSize: 11,
-                    color: const Color(0xFF6C63FF),
-                    fontWeight: FontWeight.w500,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: c.textPrimary,
+                    letterSpacing: 0.2,
                   ),
-                )
-              // ✅ REPLACE with:
-              else
-                Row(
-                  children: [
-                    Container(
-                      width: 6,
-                      height: 6,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFF00D4AA),
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      modelName != null && modelName!.isNotEmpty
-                          ? modelName!
-                          : 'Ready',
-                      style: GoogleFonts.dmSans(
-                        fontSize: 11,
-                        color: const Color(0xFF00D4AA),
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
                 ),
-            ],
+                if (chatName != null && chatName!.isNotEmpty)
+                  Text(
+                    chatName!,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.dmSans(
+                      fontSize: 11,
+                      color: c.primary,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  )
+                else
+                  Row(
+                    children: [
+                      Container(
+                        width: 6,
+                        height: 6,
+                        decoration: BoxDecoration(
+                          color: c.secondary,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Flexible(
+                        child: Text(
+                          modelName != null && modelName!.isNotEmpty
+                              ? modelName!
+                              : 'Ready',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.dmSans(
+                            fontSize: 11,
+                            color: c.secondary,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+              ],
+            ),
           ),
         ],
       ),
       actions: [
+        // Switch between available AI models (keeps the conversation).
+        if (onSwitchModel != null)
+          IconButton(
+            tooltip: 'Switch model',
+            onPressed: onSwitchModel,
+            icon: Icon(Icons.swap_horiz_rounded, color: c.primary, size: 22),
+          ),
+        // Light / dark theme toggle — one tap, easy for everyone.
+        IconButton(
+          tooltip: themeProvider.isDark ? 'Light mode' : 'Dark mode',
+          onPressed: () => themeProvider.toggle(),
+          icon: Icon(
+            themeProvider.isDark
+                ? Icons.light_mode_rounded
+                : Icons.dark_mode_rounded,
+            color: c.secondary,
+            size: 20,
+          ),
+        ),
         PopupMenuButton(
           onSelected: (value) {
             if (value == 'exit') onExit();
           },
-          color: const Color(0xFF1A1A28),
+          color: c.surface,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),
-            side: BorderSide(color: Colors.white.withOpacity(0.08)),
+            side: BorderSide(color: c.border),
           ),
           itemBuilder:
               (BuildContext context) => [
@@ -148,14 +172,14 @@ class ChatAppBar extends StatelessWidget implements PreferredSizeWidget {
                         'Exit App',
                         style: GoogleFonts.dmSans(
                           fontSize: 14,
-                          color: Colors.white70,
+                          color: c.textSecondary,
                         ),
                       ),
                     ],
                   ),
                 ),
               ],
-          icon: const Icon(Icons.more_vert, color: Color(0xFF8888AA)),
+          icon: Icon(Icons.more_vert, color: c.textFaint),
         ),
         const SizedBox(width: 4),
       ],
