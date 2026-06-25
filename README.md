@@ -8,7 +8,7 @@
 [![Android](https://img.shields.io/badge/Android-API%2021+-3DDC84?style=for-the-badge&logo=android&logoColor=white)](https://android.com)
 [![License](https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge)](LICENSE)
 
-[⬇️ Download APK](https://github.com/Umair-Habibx123/gemini_ai_app/raw/refs/heads/master/APK/gemini_ai_app.apk) • [🐛 Report Bug](https://github.com/Umair-Habibx123/gemini_ai_app/issues) • [✨ Request Feature](https://github.com/Umair-Habibx123/gemini_ai_app/issues)
+[⬇️ Download APK](https://github.com/Umair-Habibx123/gemini_ai_app/releases/download/v1.1/gemini_ai_app.apk) • [🐛 Report Bug](https://github.com/Umair-Habibx123/gemini_ai_app/issues) • [✨ Request Feature](https://github.com/Umair-Habibx123/gemini_ai_app/issues)
 
 </div>
 
@@ -34,7 +34,7 @@
 
 | Platform | Download |
 |---|---|
-| Android (APK) | [⬇️ Download APK](https://github.com/Umair-Habibx123/gemini_ai_app/raw/refs/heads/master/APK/gemini_ai_app.apk) |
+| Android (APK) | [⬇️ Download APK](https://github.com/Umair-Habibx123/gemini_ai_app/releases/download/v1.1/gemini_ai_app.apk) |
 
 > ℹ️ Enable **"Install from Unknown Sources"** in Android settings before installing.
 
